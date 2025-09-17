@@ -7,13 +7,8 @@ jQuery(document).ready(function($) {
     let searchData = null;
     var baseUrl = $('.woocommerce-ajax-search-results').data('base-url');
 
-    console.log("script loaded!");
-
     // Initialize search data
     function initSearch() {
-
-        console.log("start init..");
-
         const cachedData = localStorage.getItem(CACHE_KEY);
         const timestamp = localStorage.getItem(CACHE_KEY + '_ts');
         const now = Math.floor(Date.now() / 1000);
@@ -28,8 +23,6 @@ jQuery(document).ready(function($) {
                 console.error('Cache parse error', e);
             }
         }
-
-        console.log("start fetch data");
         
         // Fetch fresh data
         $.ajax({
@@ -48,8 +41,6 @@ jQuery(document).ready(function($) {
             },
             error: () => console.log('Data load failed - using AJAX fallback')
         });
-
-        console.log("data downloaded!");
     }
 
     // Prioritize results for local search
@@ -150,7 +141,6 @@ jQuery(document).ready(function($) {
 
     // Search input handler
     searchField.on('input', function() {
-        console.log("search process triggered!");
         const searchTerm = $(this).val().trim();
         clearTimeout(searchTimer);
         resultsContainer.hide().empty();
@@ -165,7 +155,6 @@ jQuery(document).ready(function($) {
         searchTimer = setTimeout(() => {
             //resultsContainer.html('<div class="loading"><?php echo esc_js(__("Searching...", "woocommerce")); ?></div>').show();
             let loadingIcom = `<img id="loading-search-result" src="${baseUrl}/img/loading-grey.svg">`
-            console.log(loadingIcom);
             resultsContainer.html(loadingIcom).show();
             
             // Try local search first
