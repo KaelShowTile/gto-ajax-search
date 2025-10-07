@@ -1,11 +1,10 @@
 jQuery(document).ready(function($) {
     const CACHE_KEY = 'gto_search_cache';
-    const container = $('.woocommerce-ajax-search-container');
-    const searchField = $('.woocommerce-ajax-search-field');
-    const resultsContainer = $('.woocommerce-ajax-search-results');
+    const containers = $('.woocommerce-ajax-search-container');
+    const searchFields = $('.woocommerce-ajax-search-field');
     let searchTimer;
     let searchData = null;
-    var baseUrl = $('.woocommerce-ajax-search-results').data('base-url');
+    var baseUrl = $('.woocommerce-ajax-search-results').first().data('base-url');
 
     // Initialize search data
     function initSearch() {
@@ -103,8 +102,8 @@ jQuery(document).ready(function($) {
         return prioritizeResults(results);
     }
 
-    // Display results
-    function displayResults(results) {
+    // Display results in specific container
+    function displayResults(results, container) {
         let html = '';
 
         if (results.products.length > 0 || results.categories.length > 0) {
@@ -129,58 +128,88 @@ jQuery(document).ready(function($) {
             html = '<div class="no-results"><?php echo esc_js(__("No results found", "woocommerce")); ?></div>';
         }
 
-        resultsContainer.html(html).show();
+        container.html(html).show();
     }
 
     // Hide results when clicking outside
     $(document).on('click', function(e) {
-        if (!container.is(e.target) && container.has(e.target).length === 0) {
-            resultsContainer.hide();
-        }
+        containers.each(function() {
+            const container = $(this);
+            const resultsContainer = container.find('.woocommerce-ajax-search-results');
+            if (!container.is(e.target) && container.has(e.target).length === 0) {
+                resultsContainer.hide();
+            }
+        });
     });
 
-    // Search input handler
-    searchField.on('input', function() {
+    // Perform search for specific type and container
+    function performSearch(searchTerm, action, resultsContainer) {
+        let loadingIcon = `<img id="loading-search-result" src="${baseUrl}/img/loading-grey.svg">`;
+        resultsContainer.html(loadingIcon).show();
+
+        if (action === 'woocommerce_ajax_search' && searchData) {
+            // Local search for original method
+            const results = localSearch(searchTerm);
+            displayResults(results, resultsContainer);
+        } else {
+            // AJAX search for database or XML
+            $.ajax({
+                url: woocommerce_ajax_search_params.ajax_url,
+                type: 'POST',
+                data: {
+                    action: action,
+                    search_term: searchTerm,
+                    security: woocommerce_ajax_search_params.nonce
+                },
+                success: (response) => {
+                    if (response.success) displayResults(response.data, resultsContainer);
+                    else resultsContainer.html('<div class="no-results"></div>').show();
+                },
+                error: () => {
+                    resultsContainer.html('<div class="no-results"><?php echo esc_js(__("Search error", "woocommerce")); ?></div>').show();
+                }
+            });
+        }
+    }
+
+    // Search input handler - triggers all searches when any input changes
+    searchFields.on('input', function() {
         const searchTerm = $(this).val().trim();
+
         clearTimeout(searchTimer);
-        resultsContainer.hide().empty();
+
+        // Clear all results containers
+        containers.each(function() {
+            $(this).find('.woocommerce-ajax-search-results').hide().empty();
+        });
 
         if (!searchTerm) return;
-        
+
         if (searchTerm.length < woocommerce_ajax_search_params.min_characters) {
-            resultsContainer.html(`<div class="no-results">${woocommerce_ajax_search_params.min_chars_message}</div>`).show();
+            containers.each(function() {
+                const resultsContainer = $(this).find('.woocommerce-ajax-search-results');
+                resultsContainer.html(`<div class="no-results">${woocommerce_ajax_search_params.min_chars_message}</div>`).show();
+            });
             return;
         }
 
         searchTimer = setTimeout(() => {
-            //resultsContainer.html('<div class="loading"><?php echo esc_js(__("Searching...", "woocommerce")); ?></div>').show();
-            let loadingIcom = `<img id="loading-search-result" src="${baseUrl}/img/loading-grey.svg">`
-            resultsContainer.html(loadingIcom).show();
-            
-            // Try local search first
-            if (searchData) {
-                const results = localSearch(searchTerm);
-                displayResults(results);
-            } 
-            // Fallback to AJAX
-            else {
-                $.ajax({
-                    url: woocommerce_ajax_search_params.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'woocommerce_ajax_search',
-                        search_term: searchTerm,
-                        security: woocommerce_ajax_search_params.nonce
-                    },
-                    success: (response) => {
-                        if (response.success) displayResults(response.data);
-                        else resultsContainer.html('<div class="no-results"></div>').show();
-                    },
-                    error: () => {
-                        resultsContainer.html('<div class="no-results"><?php echo esc_js(__("Search error", "woocommerce")); ?></div>').show();
-                    }
-                });
-            }
+            // Perform all three searches
+            containers.each(function() {
+                const container = $(this);
+                const resultsContainer = container.find('.woocommerce-ajax-search-results');
+                const form = container.find('.woocommerce-ajax-search-form');
+
+                let action = 'woocommerce_ajax_search'; // Default original search
+
+                if (form.hasClass('database-ajax')) {
+                    action = 'woocommerce_ajax_database_search';
+                } else if (form.hasClass('xml-ajax')) {
+                    action = 'woocommerce_ajax_xml_search';
+                }
+
+                performSearch(searchTerm, action, resultsContainer);
+            });
         }, 300);
     });
 
@@ -188,16 +217,16 @@ jQuery(document).ready(function($) {
     initSearch();
     
     // Handle result clicks
-    resultsContainer.on('click', 'a', function(e) {
+    containers.on('click', '.woocommerce-ajax-search-results a', function(e) {
         e.preventDefault();
         window.location.href = $(this).attr('href');
     });
 
     //Handle the search result template
     $('.woocommerce-ajax-search-form').on('submit', function(e) {
-        if ($('.woocommerce-ajax-search-results:visible').length > 0) {
+        if ($(this).find('.woocommerce-ajax-search-results:visible').length > 0) {
             e.preventDefault();
-            
+
             // Add a small delay to allow redirection
             setTimeout(() => {
                 window.location.href = $(this).attr('action') + '?' + $(this).serialize();
@@ -206,13 +235,13 @@ jQuery(document).ready(function($) {
     });
 
     // Clear results on actual submission
-    searchField.on('keydown', function(e) {
-        if (e.key === 'Enter' && $('.woocommerce-ajax-search-results:visible').length === 0) {
-            resultsContainer.hide().empty();
+    searchFields.on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const form = $(this).closest('.woocommerce-ajax-search-form');
+            const resultsContainer = form.find('.woocommerce-ajax-search-results');
+            if (resultsContainer.is(':visible')) {
+                resultsContainer.hide().empty();
+            }
         }
     });
 });
-
-
-
-
