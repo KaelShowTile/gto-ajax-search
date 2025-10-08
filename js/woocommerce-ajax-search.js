@@ -159,7 +159,7 @@ jQuery(document).ready(function($) {
                 data: {
                     action: action,
                     search_term: searchTerm,
-                    security: woocommerce_ajax_search_params.nonce
+                    //security: woocommerce_ajax_search_params.nonce
                 },
                 success: (response) => {
                     if (response.success) displayResults(response.data, resultsContainer);

@@ -147,7 +147,7 @@ class GTO_AJAX_Search {
     }
 
     public function init_search_data() {
-        check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
+        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
         
         $data = array(
             'products' => array(),
@@ -381,7 +381,7 @@ class GTO_AJAX_Search {
     }
 
     public function ajax_search(){
-        check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
+        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
 
         $search_term = sanitize_text_field($_POST['search_term']);
 
@@ -484,7 +484,7 @@ class GTO_AJAX_Search {
     }
 
     public function ajax_database_search(){
-        check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
+        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
 
         $search_term = sanitize_text_field($_POST['search_term']);
 
@@ -715,7 +715,7 @@ class GTO_AJAX_Search {
     }
 
     public function ajax_xml_search(){
-        check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
+        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
 
         $search_term = sanitize_text_field($_POST['search_term']);
 
