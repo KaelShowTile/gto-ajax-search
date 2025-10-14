@@ -147,7 +147,6 @@ class GTO_AJAX_Search {
     }
 
     public function init_search_data() {
-        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
         
         $data = array(
             'products' => array(),
@@ -439,6 +438,8 @@ class GTO_AJAX_Search {
                 
                 $results['products'][] = array(
                     'title' => $product->get_name(),
+                    'url' => $product->get_permalink(),
+                    'image_url' => wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') ?: wc_placeholder_img_src('thumbnail'),
                     'id' => $product_id,
                     'priority' => $is_high_priority ? 'high' : ($is_low_priority ? 'low' : 'normal')
                 );

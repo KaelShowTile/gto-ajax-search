@@ -111,6 +111,7 @@ jQuery(document).ready(function($) {
             if (results.products.length > 0) {
                 html += '<div class="results-section"><h4>Products</h4><ul>';
                 results.products.forEach(product => {
+                    console.log(product.url);
                     html += `<li><a href="${product.url}"><img src="${product.image_url}" alt="${product.title}"><span>${product.title}</span></a></li>`;
                 });
                 html += '</ul></div>';
