@@ -217,7 +217,7 @@ class GTO_AJAX_Search {
                 $is_low_priority = in_array($product_key, $lowest_priority);
                 
                 $data['products'][] = array(
-                    'title' => $product->get_name(),
+                    'title' => html_entity_decode($product->get_name(), ENT_QUOTES | ENT_HTML5),
                     'url' => $product->get_permalink(),
                     'image_url' => wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') ?: wc_placeholder_img_src('thumbnail'),
                     'id' => $product_id,
@@ -245,7 +245,7 @@ class GTO_AJAX_Search {
                 $is_low_priority = in_array($category_key, $lowest_priority);
                 
                 $data['categories'][] = array(
-                    'title' => $category->name,
+                    'title' => html_entity_decode($category->name, ENT_QUOTES | ENT_HTML5),
                     'url' => get_term_link($category),
                     'count' => $category->count,
                     'id' => $category->term_id,
@@ -669,7 +669,7 @@ class GTO_AJAX_Search {
                 $is_low_priority = in_array($product_key, $lowest_priority);
 
                 $data['products'][] = array(
-                    'title' => $product->get_name(),
+                    'title' => html_entity_decode($product->get_name(), ENT_QUOTES | ENT_HTML5),
                     'url' => $product->get_permalink(),
                     'image_url' => wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') ?: wc_placeholder_img_src('thumbnail'),
                     'id' => $product_id,
@@ -697,7 +697,7 @@ class GTO_AJAX_Search {
                 $is_low_priority = in_array($category_key, $lowest_priority);
 
                 $data['categories'][] = array(
-                    'title' => $category->name,
+                    'title' => html_entity_decode($category->name, ENT_QUOTES | ENT_HTML5),
                     'url' => get_term_link($category),
                     'count' => $category->count,
                     'id' => $category->term_id,
