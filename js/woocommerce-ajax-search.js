@@ -108,8 +108,10 @@ jQuery(document).ready(function($) {
             const form = container.find('.woocommerce-ajax-search-form');
 
             if (form.hasClass('xml-local-ajax') &&  (resultsContainer.html().includes('Loading search data') || resultsContainer.html().includes('loading-search-result'))) {
-                const searchTerm = container.val().trim();
-                performSearch(searchTerm, 'woocommerce_ajax_xml_local_search', resultsContainer);
+                const searchTerm = $('.woocommerce-ajax-search-field.xml-local-ajax').val().trim();
+                if(searchTerm.length > 2){
+                    performSearch(searchTerm, 'woocommerce_ajax_xml_local_search', resultsContainer);
+                }
             }
         });
     }
