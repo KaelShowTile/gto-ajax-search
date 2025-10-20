@@ -15,6 +15,8 @@ class GTO_AJAX_Search {
         add_action('wp_ajax_nopriv_woocommerce_ajax_database_search', array($this, 'ajax_database_search'));
         add_action('wp_ajax_woocommerce_ajax_xml_search', array($this, 'ajax_xml_search'));
         add_action('wp_ajax_nopriv_woocommerce_ajax_xml_search', array($this, 'ajax_xml_search'));
+        add_action('wp_ajax_woocommerce_ajax_xml_local_search', array($this, 'ajax_xml_local_search'));
+        add_action('wp_ajax_nopriv_woocommerce_ajax_xml_local_search', array($this, 'ajax_xml_local_search'));
 
         //Search result template redirection
         add_filter('template_include', [$this, 'custom_search_template'], 999);
@@ -23,6 +25,7 @@ class GTO_AJAX_Search {
         add_shortcode('gto_ajax_search', array($this, 'gto_ajax_search_bar'));
         add_shortcode('gto_db_ajax_search', array($this, 'gto_ajax_database_search_bar'));
         add_shortcode('gto_xml_ajax_search', array($this, 'gto_ajax_xml_search_bar'));
+        add_shortcode('gto_xml_local_ajax_search', array($this, 'gto_ajax_xml_local_search_bar'));
 
         // Schedule XML generation
         add_action('gto_generate_search_xml', array($this, 'generate_search_xml'));
@@ -76,6 +79,23 @@ class GTO_AJAX_Search {
                 <input type="hidden" name="tiles_search_result" value="1" />
                 <div class="woocommerce-ajax-search-results xml-ajax" data-base-url="<?php echo plugins_url('', dirname(__FILE__)); ?>">
                     <img id="loading-search-result xml-ajax" src="<?php echo plugins_url('', dirname(__FILE__)); ?>/img/loading-grey.svg">
+                </div>
+            </form>
+        </div>
+        <?php return ob_get_clean();
+    }
+
+    public function gto_ajax_xml_local_search_bar() {
+        ob_start();
+        ?>
+        <div class="woocommerce-ajax-search-container xml-local-ajax">
+            <form role="search" method="get" class="woocommerce-ajax-search-form xml-local-ajax" action="<?php echo esc_url(home_url('/')); ?>">
+                <img src="<?php echo plugins_url('', dirname(__FILE__)); ?>/img/search-icon.svg" class="search-icon">
+                <input type="search" class="woocommerce-ajax-search-field xml-local-ajax" placeholder="<?php echo esc_attr__('Search products...', 'woocommerce'); ?>" value="" name="s" autocomplete="off" />
+                <input type="hidden" name="post_type" value="product" />
+                <input type="hidden" name="tiles_search_result" value="1" />
+                <div class="woocommerce-ajax-search-results xml-local-ajax" data-base-url="<?php echo plugins_url('', dirname(__FILE__)); ?>">
+                    <img id="loading-search-result xml-local-ajax" src="<?php echo plugins_url('', dirname(__FILE__)); ?>/img/loading-grey.svg">
                 </div>
             </form>
         </div>
@@ -775,6 +795,31 @@ class GTO_AJAX_Search {
         $results = $this->prioritize_results($results);
 
         wp_send_json_success($results);
+    }
+
+    public function ajax_xml_local_search(){
+        //check_ajax_referer('woocommerce_ajax_search_nonce', 'security');
+
+        $search_term = sanitize_text_field($_POST['search_term']);
+
+        if (strlen($search_term) < 3) {
+            wp_send_json_error(array('message' => __('Minimum 3 characters required', 'woocommerce')));
+        }
+
+        $upload_dir = wp_upload_dir();
+        $xml_file = $upload_dir['basedir'] . '/gto-search-data.xml';
+        $xml_url = $upload_dir['baseurl'] . '/gto-search-data.xml';
+
+        // Check if XML exists on server, generate if not
+        if (!file_exists($xml_file)) {
+            $this->generate_search_xml();
+        }
+
+        // Return XML URL for client to download/cache
+        wp_send_json_success(array(
+            'xml_url' => $xml_url,
+            'last_modified' => filemtime($xml_file)
+        ));
     }
 
 }
